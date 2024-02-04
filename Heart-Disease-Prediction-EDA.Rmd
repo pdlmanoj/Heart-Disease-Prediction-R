@@ -1,0 +1,69 @@
+# Case Study1: Heart Disease Prediction Model
+
+**Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojilnem Shrestha, Sailendra Ghale`
+
+### Importing Libraries
+
+```{r}
+library(tidyverse)
+library(randomForest)
+```
+
+### Load dataset
+
+```{r}
+setwd('/Users/sandip/Documents/Github/Heart-Disease-Prediction-R/')
+heart_df <- read.csv("heart.csv")
+head(heart_df)
+```
+
+```{r}
+glimpse(heart_df)
+```
+
+-   There are 1025 rows with 14 columns and all variable are ***int*** dtype.
+
+```{r}
+is.null(heart_df)
+
+```
+
+-   No missing value in dataset
+
+    ```{r}
+    is_duplicate <- duplicated(heart_df)
+    is_duplicate
+
+    sum(is_duplicate)
+
+    # which_row_duplicate <- which(duplicated(heart_df))
+    # which_row_duplicate
+    ```
+
+-   There are 723 duplicate value present in our dataset. We gonna remove those duplicates,
+
+    ```{r}
+    df <- heart_df[!is_duplicate, ]
+    df
+
+    glimpse(df)
+    ```
+
+-   Now, we have unique ***302 values***
+
+### Is target column balance or imbalance?
+
+```{r}
+dist_target_column <- table(df$target)
+dist_target_column 
+```
+
+```{r}
+ggplot(df, aes(x = factor(target))) +
+  geom_bar() +
+  labs(title = "Distribution of Target Variable",
+       x = "Target Column",
+       y = "Count")
+```
+
+-   As, 0 ( No disease) have 138 value and 1 ( Disease) have 164 value, there is no significant difference in distribution so, **balance**.
