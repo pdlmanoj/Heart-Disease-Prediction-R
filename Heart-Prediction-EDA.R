@@ -1,10 +1,15 @@
+## Importing all library
 
+library(tidyverse)
+library(randomForest)
 
-## Importing dataset
-
-heart_df <- read.csv("/Users/sandip/Documents/Github/Heart-Disease-Prediction-R/heart.csv")
+# load data
+setwd('/Users/sandip/Documents/Github/Heart-Disease-Prediction-R/')
+heart_df <- read.csv("heart.csv")
 heart_df
 
-summary(heart_df)
+## Data cleaning
 
 is.null(heart_df)
+
+
