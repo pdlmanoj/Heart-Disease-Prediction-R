@@ -2,11 +2,18 @@
 
 **Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojilnem Shrestha, Sailendra Ghale`
 
+### Objective: 
+
+To predict whether a person has a heart disease or not.
+
 ### Importing Libraries
 
 ```{r}
 library(tidyverse)
 library(randomForest)
+library(dplyr)
+library(GGally)
+
 ```
 
 ### Load dataset
@@ -17,18 +24,46 @@ heart_df <- read.csv("heart.csv")
 head(heart_df)
 ```
 
+-   `age` : Age of individual in years
+
+-   `sex` : Gender of individual(1 = male; 0 = female)
+
+-   `cp` : Chest pain type (1 = typical angina; 2 = atypical angina; 3 = non:anginal pain; 4 = asymptomatic)
+
+-   `trestbps` : Resting blood pressure (in mm Hg on admission to the hospital)
+
+-   `chol` : Serum cholesterol in mg/dl
+
+-   `fbs` : Fasting blood sugar level \> 120 mg/dl (1 = true; 0 = false)
+
+-   `restecg` : Resting electrocardiographic results (0 = normal; 1 = having ST:T; 2 = hypertrophy)
+
+-   `thalach` : Maximum heart rate achieved
+
+-   `exang` : Exercise induced angina (1 = yes; 0 = no)
+
+-   `oldpeak` : ST depression induced by exercise relative to rest
+
+-   `slope` : The slope of the peak exercise ST segment (1 = upsloping; 2 = flat; 3 = downsloping)
+
+-   `ca` : Number of major vessels (0:4) colored by flourosopy
+
+-   `thal` : Thalassemia is an inherited blood disorder that affects the body\'s ability to produce hemoglobin and red blood cells. 1 = normal; 2 = fixed defect; 3 = reversable defect
+
+-   `target` : the predicted attribute : diagnosis of heart disease (angiographic disease status). Value 0 = \< 50% diameter narrowing; - Value 1 = \> 50% diameter narrowing.
+
 ```{r}
 glimpse(heart_df)
 ```
 
--   There are 1025 rows with 14 columns and all variable are ***int*** dtype.
+-   There are 1025 rows with 14 columns.
 
 ```{r}
 is.null(heart_df)
 
 ```
 
--   No missing value in dataset
+-   No missing value in dataset.
 
     ```{r}
     is_duplicate <- duplicated(heart_df)
@@ -44,12 +79,41 @@ is.null(heart_df)
 
     ```{r}
     df <- heart_df[!is_duplicate, ]
-    df
+    # df
 
     glimpse(df)
     ```
 
 -   Now, we have unique ***302 values***
+
+### Data Transformation
+
+As, some categorical variable are treated as (numeric value) int datatype, converting them to factor datatype [like: sex, cp, fbs, slope ...] and so on.
+
+```{r}
+# Sex column
+df$sex <- as.factor(df$sex)
+# cp
+df$cp <- as.factor(df$cp)
+#fbs
+df$fbs <- as.factor(df$fbs)
+#restecg
+df$restecg <- as.factor(df$restecg)
+#exang
+df$exang <- as.factor(df$exang)
+#slope
+df$slope <- as.factor(df$slope)
+#ca
+df$ca <- as.factor(df$ca)
+#thal
+df$thal <- as.factor(df$thal)
+#target
+df$target <- as.factor(df$target)
+```
+
+```{r}
+glimpse(df)
+```
 
 ### Is target column balance or imbalance?
 
@@ -66,4 +130,28 @@ ggplot(df, aes(x = factor(target))) +
        y = "Count")
 ```
 
--   As, 0 ( No disease) have 138 value and 1 ( Disease) have 164 value, there is no significant difference in distribution so, **balance**.
+-   As, 0 ( No disease) have 138 value and 1 ( Disease) have 164 value, there is no significant difference in distribution so, it is **balance**.
+
+### EDA
+
+```{r}
+summary(df)
+```
+
+```{r}
+
+```
+
+### Correlation Matrix
+
+```{r}
+# Only numeric value correlation
+# ggcorr(df, label = TRUE,label_size = 3, hjust = 1)
+
+```
+
+### Model Building
+
+### Random Forest
+
+### Model Evaluation
