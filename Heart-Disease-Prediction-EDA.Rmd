@@ -14,6 +14,9 @@ library(randomForest)
 library(dplyr)
 library(ggplot2)
 library(GGally)
+library(corrplot)
+library(caTools)
+library(caret)
 library(ggcorrplot)
 
 ```
@@ -29,53 +32,53 @@ head(heart_df)
 
 ### Descriptions of data set
 
-+----------------+---------------------------------------------------------------------------------+
-| Features       | Descriptions                                                                    |
-+================+=================================================================================+
-| **age**        | Age of the patient in years                                                     |
-+----------------+---------------------------------------------------------------------------------+
-| **sex**        | Gender of the patient (0 = male, 1 = female)                                    |
-+----------------+---------------------------------------------------------------------------------+
-| **cp**         | Chest pain type:\                                                               |
-|                | 0: Typical angina\                                                              |
-|                | 1: Atypical angina\                                                             |
-|                | 2: Non-anginal pain\                                                            |
-|                | 3: Asymptomatic                                                                 |
-+----------------+---------------------------------------------------------------------------------+
-| **trestbps**   | Resting blood pressure in mm Hg                                                 |
-+----------------+---------------------------------------------------------------------------------+
-| **chol**       | Serum cholesterol in mg/dl                                                      |
-+----------------+---------------------------------------------------------------------------------+
-| **fbs**        | Fasting blood sugar level, categorized as above 120 mg/dl (1 = true, 0 = false) |
-+----------------+---------------------------------------------------------------------------------+
-| **restecg**    | Resting electrocardiographic results:\                                          |
-|                | 0: Normal\                                                                      |
-|                | 1: Having ST-T wave abnormality\                                                |
-|                | 2: Showing probable or definite left ventricular hypertrophy                    |
-+----------------+---------------------------------------------------------------------------------+
-| **thalach**    | Maximum heart rate achieved during a stress test                                |
-+----------------+---------------------------------------------------------------------------------+
-| **exang**      | Exercise-induced angina (1 = yes, 0 = no)                                       |
-+----------------+---------------------------------------------------------------------------------+
-| **oldpeak**    | ST depression induced by exercise relative to rest                              |
-+----------------+---------------------------------------------------------------------------------+
-| **slope**      | Slope of the peak exercise ST segment:\                                         |
-|                | 0: Upsloping\                                                                   |
-|                | 1: Flat\                                                                        |
-|                | 2: Downsloping                                                                  |
-+----------------+---------------------------------------------------------------------------------+
-| **ca**         | Number of major vessels (0-4) colored by fluoroscopy                            |
-+----------------+---------------------------------------------------------------------------------+
-| **thal**       | Thalium stress test result:\                                                    |
-|                | 0: Normal\                                                                      |
-|                | 1: Fixed defect\                                                                |
-|                | 2: Reversible defect\                                                           |
-|                | 3: Not described                                                                |
-+----------------+---------------------------------------------------------------------------------+
-| **target**     | Heart disease status (0 = no disease, 1 = presence of disease)                  |
-+----------------+---------------------------------------------------------------------------------+
-| **chol**       | Serum cholesterol in mg/dl                                                      |
-+----------------+---------------------------------------------------------------------------------+
++--------------+---------------------------------------------------------------------------------+
+| Features     | Descriptions                                                                    |
++==============+=================================================================================+
+| **age**      | Age of the patient in years                                                     |
++--------------+---------------------------------------------------------------------------------+
+| **sex**      | Gender of the patient (0 = male, 1 = female)                                    |
++--------------+---------------------------------------------------------------------------------+
+| **cp**       | Chest pain type:\                                                               |
+|              | 0: Typical angina\                                                              |
+|              | 1: Atypical angina\                                                             |
+|              | 2: Non-anginal pain\                                                            |
+|              | 3: Asymptomatic                                                                 |
++--------------+---------------------------------------------------------------------------------+
+| **trestbps** | Resting blood pressure in mm Hg                                                 |
++--------------+---------------------------------------------------------------------------------+
+| **chol**     | Serum cholesterol in mg/dl                                                      |
++--------------+---------------------------------------------------------------------------------+
+| **fbs**      | Fasting blood sugar level, categorized as above 120 mg/dl (1 = true, 0 = false) |
++--------------+---------------------------------------------------------------------------------+
+| **restecg**  | Resting electrocardiographic results:\                                          |
+|              | 0: Normal\                                                                      |
+|              | 1: Having ST-T wave abnormality\                                                |
+|              | 2: Showing probable or definite left ventricular hypertrophy                    |
++--------------+---------------------------------------------------------------------------------+
+| **thalach**  | Maximum heart rate achieved during a stress test                                |
++--------------+---------------------------------------------------------------------------------+
+| **exang**    | Exercise-induced angina (1 = yes, 0 = no)                                       |
++--------------+---------------------------------------------------------------------------------+
+| **oldpeak**  | ST depression induced by exercise relative to rest                              |
++--------------+---------------------------------------------------------------------------------+
+| **slope**    | Slope of the peak exercise ST segment:\                                         |
+|              | 0: Upsloping\                                                                   |
+|              | 1: Flat\                                                                        |
+|              | 2: Downsloping                                                                  |
++--------------+---------------------------------------------------------------------------------+
+| **ca**       | Number of major vessels (0-4) colored by fluoroscopy                            |
++--------------+---------------------------------------------------------------------------------+
+| **thal**     | Thalium stress test result:\                                                    |
+|              | 0: Normal\                                                                      |
+|              | 1: Fixed defect\                                                                |
+|              | 2: Reversible defect\                                                           |
+|              | 3: Not described                                                                |
++--------------+---------------------------------------------------------------------------------+
+| **target**   | Heart disease status (0 = no disease, 1 = presence of disease)                  |
++--------------+---------------------------------------------------------------------------------+
+| **chol**     | Serum cholesterol in mg/dl                                                      |
++--------------+---------------------------------------------------------------------------------+
 
 ```{r}
 glimpse(heart_df)
@@ -267,7 +270,7 @@ ggplot(df, mapping = aes(x = exang, fill = target)) +
 
 -   Here, patient who did not have exercise induced angina 0 (no) show high probability of having heart disease compare to those who experience (1). There seems correlation between target class.
 
-#### 6. slope vs target 
+#### 6. slope vs target
 
 ```{r}
 ggplot(df, mapping = aes(x = slope, fill = target)) +
@@ -315,9 +318,44 @@ ggcorr(df, label = TRUE,label_size = 3, hjust = 1)
 
 ```
 
+-   Above, numeric feature correlation, shows there is negative correlation with oldpeak and thalach indicate (one feature increases, other tends to decrease).
+
+-   Correlation of all features
+
+```{r}
+# Convert factor variables back to numeric representation
+
+# df$sex <- as.numeric(df$sex)
+# df$cp <- as.numeric(df$cp)
+# df$fbs <- as.numeric(df$fbs)
+# df$restecg <- as.numeric(df$restecg)
+# df$exang <- as.numeric(df$exang)
+# df$slope <- as.numeric(df$slope)
+# df$ca <- as.numeric(df$ca)
+# df$thal <- as.numeric(df$thal)
+# df$target <- as.numeric(df$target)
+# 
+# 
+# cor_matrix <- cor(df, use="complete.obs")
+# corrplot(cor_matrix, method="color")
+
+```
+
+-   We can say, ca, cp, exang, sex, slope, thal have high correlation with target class along with moderate impact by rsetecg column.
+
 ### Model Building
 
-#### 1. Train Test Split
+#### 1. Split Train and Test set
+
+-   We split 75% for training set and 25% for testing set.
+
+```{r}
+
+```
+
+```{r}
+
+```
 
 ### Random Forest
 
