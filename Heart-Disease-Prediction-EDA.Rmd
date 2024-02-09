@@ -334,7 +334,7 @@ ggcorr(df, label = TRUE,label_size = 3, hjust = 1)
 # df$slope <- as.numeric(df$slope)
 # df$ca <- as.numeric(df$ca)
 # df$thal <- as.numeric(df$thal)
-# df$target <- as.numeric(df$target)
+# df$target <- as.numeric(df$target) -1
 # 
 # 
 # cor_matrix <- cor(df, use="complete.obs")
