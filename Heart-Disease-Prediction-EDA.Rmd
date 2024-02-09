@@ -1,12 +1,25 @@
 # Case Study1: Heart Disease Prediction Model
 
-**Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojilnem Shrestha, Sailendra Ghale`
+**Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojil Shrestha, Sailendra Ghale`
+
+### Objective:
+
+To predict whether a person has a heart disease or not.
 
 ### Importing Libraries
 
 ```{r}
 library(tidyverse)
 library(randomForest)
+library(class)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(corrplot)
+library(caTools)
+library(caret)
+library(ggcorrplot)
+
 ```
 
 ### Load dataset
@@ -15,20 +28,71 @@ library(randomForest)
 setwd('/Users/sandip/Documents/Github/Heart-Disease-Prediction-R/')
 heart_df <- read.csv("heart.csv")
 head(heart_df)
+
 ```
+
+### Descriptions of data set
+
++--------------+---------------------------------------------------------------------------------+
+| Features     | Descriptions                                                                    |
++==============+=================================================================================+
+| **age**      | Age of the patient in years                                                     |
++--------------+---------------------------------------------------------------------------------+
+| **sex**      | Gender of the patient (0 = male, 1 = female)                                    |
++--------------+---------------------------------------------------------------------------------+
+| **cp**       | Chest pain type:\                                                               |
+|              | 0: Typical angina\                                                              |
+|              | 1: Atypical angina\                                                             |
+|              | 2: Non-anginal pain\                                                            |
+|              | 3: Asymptomatic                                                                 |
++--------------+---------------------------------------------------------------------------------+
+| **trestbps** | Resting blood pressure in mm Hg                                                 |
++--------------+---------------------------------------------------------------------------------+
+| **chol**     | Serum cholesterol in mg/dl                                                      |
++--------------+---------------------------------------------------------------------------------+
+| **fbs**      | Fasting blood sugar level, categorized as above 120 mg/dl (1 = true, 0 = false) |
++--------------+---------------------------------------------------------------------------------+
+| **restecg**  | Resting electrocardiographic results:\                                          |
+|              | 0: Normal\                                                                      |
+|              | 1: Having ST-T wave abnormality\                                                |
+|              | 2: Showing probable or definite left ventricular hypertrophy                    |
++--------------+---------------------------------------------------------------------------------+
+| **thalach**  | Maximum heart rate achieved during a stress test                                |
++--------------+---------------------------------------------------------------------------------+
+| **exang**    | Exercise-induced angina (1 = yes, 0 = no)                                       |
++--------------+---------------------------------------------------------------------------------+
+| **oldpeak**  | ST depression induced by exercise relative to rest                              |
++--------------+---------------------------------------------------------------------------------+
+| **slope**    | Slope of the peak exercise ST segment:\                                         |
+|              | 0: Upsloping\                                                                   |
+|              | 1: Flat\                                                                        |
+|              | 2: Downsloping                                                                  |
++--------------+---------------------------------------------------------------------------------+
+| **ca**       | Number of major vessels (0-4) colored by fluoroscopy                            |
++--------------+---------------------------------------------------------------------------------+
+| **thal**     | Thalium stress test result:\                                                    |
+|              | 0: Normal\                                                                      |
+|              | 1: Fixed defect\                                                                |
+|              | 2: Reversible defect\                                                           |
+|              | 3: Not described                                                                |
++--------------+---------------------------------------------------------------------------------+
+| **target**   | Heart disease status (0 = no disease, 1 = presence of disease)                  |
++--------------+---------------------------------------------------------------------------------+
+| **chol**     | Serum cholesterol in mg/dl                                                      |
++--------------+---------------------------------------------------------------------------------+
 
 ```{r}
 glimpse(heart_df)
 ```
 
--   There are 1025 rows with 14 columns and all variable are ***int*** dtype.
+-   There are 1025 rows with 14 columns.
 
 ```{r}
 is.null(heart_df)
 
 ```
 
--   No missing value in dataset
+-   No missing value in our data set.
 
     ```{r}
     is_duplicate <- duplicated(heart_df)
@@ -40,16 +104,83 @@ is.null(heart_df)
     # which_row_duplicate
     ```
 
--   There are 723 duplicate value present in our dataset. We gonna remove those duplicates,
+-   There are 723 duplicate value present in our data set. We gonna remove those duplicates,
 
     ```{r}
     df <- heart_df[!is_duplicate, ]
-    df
+    # df
 
     glimpse(df)
     ```
 
 -   Now, we have unique ***302 values***
+
+------------------------------------------------------------------------
+
+### Data Transformation
+
+-   As, **9 columns** (`sex`, `cp`, `fbs`, `restecg`, `exang`, `slope`, `ca`, `thal`, and `target`) are **numerical** in terms of data type, but they are **categorical** features, so converting data type to factor.
+
+```{r}
+# Sex column
+df$sex <- as.factor(df$sex)
+# cp
+df$cp <- as.factor(df$cp)
+#fbs
+df$fbs <- as.factor(df$fbs)
+#restecg
+df$restecg <- as.factor(df$restecg)
+#exang
+df$exang <- as.factor(df$exang)
+#slope
+df$slope <- as.factor(df$slope)
+#ca
+df$ca <- as.factor(df$ca)
+#thal
+df$thal <- as.factor(df$thal)
+#target
+df$target <- as.factor(df$target)
+```
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+summary(df)
+```
+
+### Numerical Feature
+
+-   **Age:** Min: 29 Max: 77 with average 55.5
+
+-   **trestbps:** Ranging from 94 to 200 mm Hg with average 131.62 mm Hg
+
+-   **chol:** Min 126 to max: 564 mg/dl with average 246.5 mg/dl
+
+-   **thalach:** Ranging from 71 to 202 with average heart rate is 149.6
+
+-   **oldpeak:** Ranging from 0 to 6.2 with average ST depression is 1.04
+
+### Categorical Feature
+
+-   **sex :** Male (0) 96 and female(1) 206
+
+-   **cp:** 4 unique type of chest pain with most common 0 occuring 143 times.
+
+-   **fbs:** Most frequent 0(low) with 257 (fasting blood sugar)
+
+-   **restecg:** 3 unique with most common 1 with 151 times.
+
+-   **exng:** 2 unique with most frequent 0 with 203 times.
+
+-   **slope:** 3 unique with most frequent 2 with 141 times.
+
+-   **ca:** 5 unique with 0 most frequent with 175 times.
+
+-   **thal:** 4 unique with most common 2 with 165 times.
+
+-   **target:** 0: 138 (No disease) \| 1: 164 (Presence of disease)
 
 ### Is target column balance or imbalance?
 
@@ -66,4 +197,265 @@ ggplot(df, aes(x = factor(target))) +
        y = "Count")
 ```
 
--   As, 0 ( No disease) have 138 value and 1 ( Disease) have 164 value, there is no significant difference in distribution so, **balance**.
+-   As, 0 ( No disease) have 138 value and 1 ( Disease) have 164 value, there is no significant difference in distribution so, it is **balance**.
+
+------------------------------------------------------------------------
+
+### EDA
+
+#### 1. Age vs Target column
+
+```{r}
+
+ggplot(df, mapping = aes(x = age, fill = target)) +
+  geom_histogram() +
+  facet_wrap(vars(target)) +
+  labs(title = "Age vs Target", x = "Age", y = "Count", fill = "Target")
+
+```
+
+-   As, above plot, age between 40 to 60 have high probability of having a heart disease as compare to younger age.
+
+#### 2. CP vs Target
+
+```{r}
+ggplot(df, mapping = aes(x=target, fill = cp)) +
+  geom_bar(position = "dodge") +
+  labs(title = "cp vs target", x = "Target", y = "Count", fill = "cp type")
+```
+
+-   Here, 2 (non-anginal chest pain) have highest count for a person to have a heart disease, while 3 (asymptomatic) have lowest count.
+
+-   There is high count of 0 (typical angina chest pain) for non heart disease in comparison with those who have heart disease.
+
+-   There is relationship between chest pain column and target column.
+
+#### 3. Sex vs Target
+
+```{r}
+ggplot(df, mapping = aes(x = sex, fill = target)) +
+  geom_bar(position = "fill") +
+  labs(x = "Sex", y = "Proportion", fill = "Target", title = 'Sex vs Target') +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+```
+
+-   In above bar plot, male(0) have high probability of heart disease in comparison to female (1). There is relation between sex and target class.
+
+### 4. fbs vs target
+
+```{r}
+# 0 low | 1 high
+
+ggplot(df, mapping = aes(x = fbs, fill = target)) +
+  geom_bar(position = "fill") +
+  labs(x = "Fasting blood sugar", y = "Proportion", fill = "Target") +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+```
+
+-   There is similar distribution between (1) high blood sugar \> 120 mg/dl and (0) is relatively similar, so fbs column have no correlation with target class.
+
+#### 5. exang vs target
+
+```{r}
+# 1 = yes, 0 = no
+
+ggplot(df, mapping = aes(x = exang, fill = target)) +
+  geom_bar(position = "fill") +
+  labs(x = "Exercise Induced Angina", y = "Proportion", fill = "Target") +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+
+```
+
+-   Here, patient who did not have exercise induced angina 0 (no) show high probability of having heart disease compare to those who experience (1). There seems correlation between target class.
+
+#### 6. slope vs target
+
+```{r}
+ggplot(df, mapping = aes(x = slope, fill = target)) +
+  geom_bar(position = "fill") +
+  labs(x = "slope of peak exercise(ST)", y = "Proportion", fill = "Target") +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+```
+
+-   Here, 2 (Down sloping) has probability of have heart disease with low probability (flat), showing potential to predict target class.
+
+#### 7. thal vs target
+
+```{r}
+ggplot(df, mapping = aes(x = thal, fill = target)) +
+  geom_bar(position = "fill") +
+  labs(x = "Thalium Stress Test Result", y = "Proportion", fill = "Target") +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+```
+
+-   Here, 2 type (thal) have high proportion of heart disease compare to other types.
+
+#### ca vs target
+
+```{r}
+ggplot(df, mapping = aes(x = target, fill = ca)) +
+  geom_bar(position = "fill") +
+  labs(x = "Target", y = "Proportion", fill = "Number of Major Vessels") +
+  theme(axis.text.x = element_text(size = 12), axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12), axis.text.y = element_text(size = 12))
+```
+
+-   Here, patients with 0 major vessel has highest probability of heart disease and as the major vessels increases, probability of having heart disease decreases.
+
+**Observation:** Features ca, cp, sex, exang, slope, thal have high impact on target column.
+
+------------------------------------------------------------------------
+
+### Correlation Matrix
+
+```{r}
+# Only numeric value correlation
+ggcorr(df, label = TRUE,label_size = 3, hjust = 1)
+
+```
+
+-   Above, numeric feature correlation, shows there is negative correlation with oldpeak and thalach indicate (one feature increases, other tends to decrease).
+
+-   Correlation of all features
+
+```{r}
+# Convert factor variables back to numeric representation
+
+# df$sex <- as.numeric(df$sex)
+# df$cp <- as.numeric(df$cp)
+# df$fbs <- as.numeric(df$fbs)
+# df$restecg <- as.numeric(df$restecg)
+# df$exang <- as.numeric(df$exang)
+# df$slope <- as.numeric(df$slope)
+# df$ca <- as.numeric(df$ca)
+# df$thal <- as.numeric(df$thal)
+# df$target <- as.numeric(df$target)
+# 
+# 
+# cor_matrix <- cor(df, use="complete.obs")
+# corrplot(cor_matrix, method="color")
+
+```
+
+-   We can say, ca, cp, exang, sex, slope, thal have high correlation with target class along with moderate impact by rsetecg column.
+
+### Model Building
+
+-   We split 70% for training set and 30% for testing set.
+
+```{r}
+set.seed(100) # random number 
+train_index<-sample(nrow(df),0.70*nrow(df))
+train_data <- df[train_index, ]
+test_data <- df[-train_index, ]
+
+
+```
+
+### Logistic Regression
+
+```{r}
+# Train logistic regression model
+logistic_model <- glm(target ~ ., data = train_data, family = "binomial")
+
+summary(logistic_model)
+
+```
+
+-   **Age** shows positive coefficient, showing as age increase, the chances of having heart disease also increased.
+
+-   **sex** with negative coefficient, 1: Female , showing being female means low chances of having heart disease in comparsion to male.
+
+-   **cp** with positive relationship with target column.
+
+-   **trestbps** and **chol** have negative coefficient, as there value high means lower chances of having heart disease.
+
+-   **exang1** meaning when angina present, there is lower chances of having heart disease.
+
+```{r}
+# Evaluate models
+logistic_predictions <- predict(logistic_model, newdata = test_data, type = "response")
+
+# Convert predictions to numeric
+logistic_predictions <- as.numeric(as.character(logistic_predictions))
+
+# Convert to binary 0 and 1 of predictions
+logistic_predictions <- ifelse(logistic_predictions > 0.5, 1, 0)
+
+## Accuracy of Model
+logistic_accuracy <- mean(logistic_predictions == test_data$target)
+cat("Logistic Regression Accuracy:", logistic_accuracy, "\n") 
+```
+
+```{r}
+confusion_matrix <- confusionMatrix(factor(logistic_predictions), factor(test_data$target))
+
+# Print confusion matrix
+print(confusion_matrix)
+```
+
+-   Using **logistic regression** we achieved accuracy with 74 %
+
+### KNN
+
+```{r}
+## K-value calculation
+sqrt(nrow(train_data))
+```
+
+-   We got 14.5258 which is even value, so we take k value as 15.
+
+```{r}
+knn_model <- knn(train = train_data[, -ncol(train_data)], test = test_data[, -ncol(test_data)], cl = train_data$target, k = 15)
+
+# Model accurary
+knn_accuracy <- mean(knn_model == test_data$target)
+cat("KNN Accuracy:", knn_accuracy, "\n")
+```
+
+```{r}
+
+confusion_matrix <- confusionMatrix(factor(knn_model), factor(test_data$target))
+
+confusion_matrix
+
+```
+
+-   Using **K-Nearest** **Neighbor** we achieved accuracy with 68 % which less than **logistic regression** model.
+
+### Random Forest
+
+```{r}
+
+# Training model
+random_forest_model <- randomForest(target ~.,  data = train_data)
+
+rf_predictions <- predict(random_forest_model, newdata = test_data)
+
+# Evaluate model
+
+rf_accuracy <- mean(rf_predictions == test_data$target)
+cat("Random Forest Accuracy:", rf_accuracy, "\n")
+
+
+```
+
+```{r}
+# Confusion Matrix
+confusion_matrix <- confusionMatrix(rf_predictions, test_data$target)
+
+confusion_matrix
+
+
+```
+
+-   We got accuracy of 81% using Random Forest model (highest among 3 model)
+
+### Conclusion:
+
+-   Based on the performance of 3 model [Random Forest, Logistic Regression, K-NN], we got accuracy of 74% with Logistic Regression and Random Forest with highest accuracy of 81% suggesting its robustness in capturing complex interactions and nonlinear relationships among features. While KNN model achieved with lowest accuracy of 68 % which is way less in comparison of 2 other model.
