@@ -1,6 +1,6 @@
 # Case Study1: Heart Disease Prediction Model
 
-**Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojilnem Shrestha, Sailendra Ghale`
+**Group Members:** `Manoj Paudel, Kushal Pandey, Kabin Shrestha, Rojil Shrestha, Sailendra Ghale`
 
 ### Objective:
 
@@ -11,6 +11,7 @@ To predict whether a person has a heart disease or not.
 ```{r}
 library(tidyverse)
 library(randomForest)
+library(class)
 library(dplyr)
 library(ggplot2)
 library(GGally)
@@ -345,18 +346,116 @@ ggcorr(df, label = TRUE,label_size = 3, hjust = 1)
 
 ### Model Building
 
-#### 1. Split Train and Test set
-
--   We split 75% for training set and 25% for testing set.
+-   We split 70% for training set and 30% for testing set.
 
 ```{r}
+set.seed(100) # random number 
+train_index<-sample(nrow(df),0.70*nrow(df))
+train_data <- df[train_index, ]
+test_data <- df[-train_index, ]
 
+
+```
+
+### Logistic Regression
+
+```{r}
+# Train logistic regression model
+logistic_model <- glm(target ~ ., data = train_data, family = "binomial")
+
+summary(logistic_model)
+
+```
+
+-   **Age** shows positive coefficient, showing as age increase, the chances of having heart disease also increased.
+
+-   **sex** with negative coefficient, 1: Female , showing being female means low chances of having heart disease in comparsion to male.
+
+-   **cp** with positive relationship with target column.
+
+-   **trestbps** and **chol** have negative coefficient, as there value high means lower chances of having heart disease.
+
+-   **exang1** meaning when angina present, there is lower chances of having heart disease.
+
+```{r}
+# Evaluate models
+logistic_predictions <- predict(logistic_model, newdata = test_data, type = "response")
+
+# Convert predictions to numeric
+logistic_predictions <- as.numeric(as.character(logistic_predictions))
+
+# Convert to binary 0 and 1 of predictions
+logistic_predictions <- ifelse(logistic_predictions > 0.5, 1, 0)
+
+## Accuracy of Model
+logistic_accuracy <- mean(logistic_predictions == test_data$target)
+cat("Logistic Regression Accuracy:", logistic_accuracy, "\n") 
+```
+
+```{r}
+confusion_matrix <- confusionMatrix(factor(logistic_predictions), factor(test_data$target))
+
+# Print confusion matrix
+print(confusion_matrix)
+```
+
+-   Using **logistic regression** we achieved accuracy with 74 %
+
+### KNN
+
+```{r}
+## K-value calculation
+sqrt(nrow(train_data))
+```
+
+-   We got 14.5258 which is even value, so we take k value as 15.
+
+```{r}
+knn_model <- knn(train = train_data[, -ncol(train_data)], test = test_data[, -ncol(test_data)], cl = train_data$target, k = 15)
+
+# Model accurary
+knn_accuracy <- mean(knn_model == test_data$target)
+cat("KNN Accuracy:", knn_accuracy, "\n")
 ```
 
 ```{r}
 
+confusion_matrix <- confusionMatrix(factor(knn_model), factor(test_data$target))
+
+confusion_matrix
+
 ```
+
+-   Using **K-Nearest** **Neighbor** we achieved accuracy with 68 % which less than **logistic regression** model.
 
 ### Random Forest
 
-### Model Evaluation
+```{r}
+
+# Training model
+random_forest_model <- randomForest(target ~.,  data = train_data)
+
+rf_predictions <- predict(random_forest_model, newdata = test_data)
+
+# Evaluate model
+
+rf_accuracy <- mean(rf_predictions == test_data$target)
+cat("Random Forest Accuracy:", rf_accuracy, "\n")
+
+
+```
+
+```{r}
+# Confusion Matrix
+confusion_matrix <- confusionMatrix(rf_predictions, test_data$target)
+
+confusion_matrix
+
+
+```
+
+-   We got accuracy of 81% using Random Forest model (highest among 3 model)
+
+### Conclusion:
+
+-   Based on the performance of 3 model [Random Forest, Logistic Regression, K-NN], we got accuracy of 74% with Logistic Regression and Random Forest with highest accuracy of 81% suggesting its robustness in capturing complex interactions and nonlinear relationships among features. While KNN model achieved with lowest accuracy of 68 % which is way less in comparison of 2 other model.
